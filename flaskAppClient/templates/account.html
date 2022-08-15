@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="container my-5">
+        {% if payment_info != None %}
+            <form method="POST" action="/payment">
+                <h1 class="mt-4">Trenutno stanje: ${{ payment_info[4] }}</h1>
+
+                <h1>Uplata novca na nalog</h1>
+                <div class="input-group mb-3">
+                    <span class="input-group-text">$</span>
+                    <input type="number" class="form-control" name="ammount"
+                           aria-label="Amount (to the nearest dollar)">
+                    <span class="input-group-text">.00</span>
+                </div>
+                <button type="submit" class="btn d-block w-50 mx-auto btn-success">Uplati</button>
+            </form>
+        {% endif %}
+        <div class="row mt-5">
+            <div class="col-md-6">
+                <h1>Konfiguracija naloga</h1>
+                <form action="/account" method="POST">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="fname">Ime</label>
+                                <input class="form-control" name="fname" type="text" id="fname"
+                                       value="{{ account[1] }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="lname">Prezime</label>
+                                <input class="form-control" name="lname" type="text" id="lname"
+                                       value="{{ account[2] }}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="phone">Broj telefona</label>
+                                <input class="form-control" name="phone" type="text" id="phone"
+                                       value="{{ account[-1] }}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="address">Adresa</label>
+                                <input class="form-control" name="address" type="text" id="address"
+                                       value="{{ account[5] }}">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="city">Grad</label>
+                                <input class="form-control" name="city" type="text" id="city" value="{{ account[6] }}">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="country">Drzava</label>
+                                <input class="form-control" name="country" type="text" id="country"
+                                       value="{{ account[7] }}">
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-3">Izmeni nalog</button>
+                </form>
+            </div>
+        <div class = "col-md-2"></div>
+            <div class="col-md-4">
+                {% if payment_info == None %}
+                    <h1> Konfiguracija placanja</h1>
+                    <span>Trenutno nemate konfigurisanu karticu kojom vrsite placanje.</span>
+                    <form action="/paymentInformation" method="POST">
+                        <div class="form-group">
+                            <label for="cholder">Ime vlasnika kartice</label>
+                            <input class="form-control" name="cholder" id="cholder">
+                        </div>
+                        <div class="form-group">
+                            <label for="cnumber">Broj kartice</label>
+                            <input class="form-control" name="cnumber" id="cnumber">
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-md-4">
+                                <label for="cholder">Mesec isteka</label>
+                                <select class="form-control" name="month">
+                                    {% for i in range(1,13) %}
+                                        <option value="{{ i }}">{{ i }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label for="year">Godina isteka</label>
+                                <select class="form-control" name="year">
+                                    {% for i in range(20,50) %}
+                                        <option value="{{ i }}">{{ i }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="cvc">Sigurnosni kod</label>
+                                <input name="cvc" id="cvc" class="form-control" type="number" min="100" max="999">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary my-3">Dodaj nacin placanja</button>
+                    </form>
+                {% else %}
+                    <h1>Podaci o kartici</h1>
+                    <div class="form-group">
+                        <label for="cholder">Ime vlasnika</label>
+                        <input disabled class="form-control" id="cholder" value="{{ payment_info[0] }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="cnumber">Broj kartice</label>
+                        <input disabled class="form-control" id="cnumber" value="{{ payment_info[1] }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="valid">Datum isteka</label>
+                        <input disabled class="form-control" id="valid" value="{{ payment_info[2] }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="cvc">Sigurnosni kod</label>
+                        <input disabled class="form-control" id="cvc" value="{{ payment_info[3] }}">
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+{% endblock %}

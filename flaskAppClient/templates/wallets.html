@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container my-3">
+        <h1>Vase kriptovalute</h1>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <th>Valuta</th>
+                <th>Kolicina</th>
+                <th>Unovci</th>
+                <th>Unovci sve</th>
+                {% for wallet in wallets %}
+                    <tr>
+                        <td>{{ wallet['currency'] }}</td>
+                        <td>{{ wallet['quantity'] }}</td>
+                        <td>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#monetizeModal"
+                                    onclick="monetizeModal({{ wallet['currency_id'] }})">
+                                Unovci
+                            </button>
+                        </td>
+                        <td>
+                            <button class="btn btn-success"
+                                    onclick="monetizeAll({{ wallet['currency_id'] }},{{ wallet['quantity'] }} )">Unovci
+                                sve
+                            </button>
+                        </td>
+
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+    <div class="modal fade" id="monetizeModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Unovci</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <div class="form-group">
+                            <label>Kolicina</label>
+                            <input id="quantity" type="number" class="form-control">
+                        </div>
+                        <input type="hidden" id="curid">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="monetize()">Unovci</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        let cid = null;
+
+        function monetizeModal(curID) {
+            cid = curID
+        }
+
+        function monetize() {
+            if (Number.isNaN(parseInt($("#quantity").val())) == false) {
+                $.ajax({
+                    url: '/cryptoWithdrawal',
+                    method: "POST",
+                    data: {
+                        'currency_id': cid,
+                        "quantity": parseInt($("#quantity").val())
+                    },
+                    success: function (response) {
+                        location.reload()
+                    }
+
+                })
+            }
+        }
+
+        function monetizeAll(curid, quantity) {
+            $.ajax({
+                url: '/cryptoWithdrawal',
+                method: "POST",
+                data: {
+                    'currency_id': curid,
+                    "quantity": quantity
+                },
+                success: function (response) {
+                    location.reload()
+                }
+            })
+        }
+    </script>
+{% endblock %}

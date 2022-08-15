@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CChange</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.js"
+            integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+            crossorigin="anonymous"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.js"
+            integrity="sha512-MgkNs0gNdrnOM7k+0L+wgiRc5aLgl74sJQKbIWegVIMvVGPc1+gc1L2oK9Wf/D9pq58eqIJAxOonYPVE5UwUFA=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">CChange</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                {% if 'uid' in session and session['uid'] != None %}
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="/">Pocetna</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/account">Moj nalog</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/transactions">Transakcije</a>
+                    </li>
+                     <li class="nav-item">
+                        <a class="nav-link" href="/wallets">Novcanici</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logout">{{ session['email'] }} - Odjavi se</a>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login">Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/register">Registracija</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>
+<div id = "transactionNotifier"></div>
+{% if 'error' in session %}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <strong>Greska!</strong> {{ session.pop('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+{% endif %}
+{% if 'message' in session %}
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <strong>Uspeh!</strong> {{ session.pop('message') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+{% endif %}
+{% block content %}
+{% endblock %}
+<script>
+    let listenSock = io();
+    listenSock.connect("http://127.0.0.1:5001")
+    if(window.location.pathname == "/"){
+        listenSock.emit("getCryptoData",{})
+    }
+    listenSock.on('newTransaction', (data) => {
+        console.log(data)
+        let element = `
+        <div class="alert alert-primary alert-dismissible fade show" role="alert">
+          <strong>Nova transakcija!</strong> <a href = "/transactions">Pogledaj</a>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        `
+        $("#transactionNotifier").empty()
+        $("#transactionNotifier").append(element)
+    })
+    listenSock.on('processedTransaction', (data) => {
+        let element = `
+        <div class="alert alert-primary alert-dismissible fade show" role="alert">
+          <strong>Transakcija procesovana!</strong> <a href = "/transactions">Pogledaj</a>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        `
+        $("#transactionNotifier").empty()
+        $("#transactionNotifier").append(element)
+    })
+</script>
+</body>
+</html>

@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="container my-3">
+        <div class="card">
+            <ul class="list-group list-group-flush">
+                {% for currency in currencies %}
+                    <div class="list-group-item w-100 d-flex justify-content-between">
+                        <div class="px-3 d-flex flex-grow-1 align-items-center justify-content-between">
+                            <span>{{ currency[1] }} ({{ currency[2] }})</span>
+                            <span id="{{ currency[2] }}">Value</span>
+                        </div>
+                        <button class="btn btn-primary" onclick="prepareToBuyCrypto({{ currency[0] }})"
+                                data-bs-toggle="modal" data-bs-target="#buyCryptoModal">Kupi
+                        </button>
+                    </div>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+
+    <div class="modal fade" id="buyCryptoModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Kupi <span id="currName"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="container">
+                        <div class="form-group">
+                            <label for="currency_quantity">Kolicina</label>
+                            <input id="currency_quantity" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="currency_price">Cena valute</label>
+                            <input id="currency_price" class="form-control" disabled>
+                        </div>
+                        <div class="w-100 d-flex justify-content-between">
+                            <span>Trenutno stanje: $<span id="curBal"></span></span>
+                            <span class="text-end">Stanje po zavrsetku transakcije: <span id="newBal"></span></span>
+                        </div>
+                        <small>Upozorenje: Kupovina kriptovalute traje 5 minuta. Ukoliko dodje do promene cene valute,
+                            pri cemu ona prelazi vrednosti Vaseg racuna, transakcija ce biti ponistena.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="buyBtn" onclick="startTransaction()">Kupi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let userBal = 0;
+        let curPrice = 0;
+        let curName = "";
+        let socket = io()
+        socket.connect("http://127.0.0.1/5001")
+
+        socket.on('receiveCryptoData', (data) => {
+            console.log(data)
+            for (let row of data.data.rates) {
+                console.log(row)
+                $("#" + row.short_name).text("$" + row.price)
+            }
+        })
+
+        function setBal(val) {
+            userBal = val
+        }
+
+        function setCurPrice(val) {
+            curPrice = val
+        }
+
+        function setCurName(val) {
+            curName = val
+        }
+
+        function prepareToBuyCrypto(curr_id) {
+            $.ajax({
+                url: '/getCryptoDetails?id=' + curr_id,
+                dataType: 'json',
+                success: function (response) {
+                    console.log(response)
+                    $("#currName").text(response.name)
+                    $("#currency_price").val(response.price)
+                    setCurPrice(response.price)
+                    setCurName(response.short_name)
+                    $.ajax({
+                        url: '/getUserBalance',
+                        dataType: 'json',
+                        success: function (response) {
+                            $("#curBal").text(response.balance)
+                            setBal(response.balance)
+                        }
+                    })
+                }
+            })
+            $("#currency_quantity").keyup(function () {
+                let quantity = parseInt($("#currency_quantity").val())
+                let moneySpent = quantity * curPrice
+                let remainingMoney = userBal - moneySpent
+                if (remainingMoney > userBal) {
+                    $("#buyBtn").prop('disabled', true)
+                }
+                if (Number.isNaN(remainingMoney) == false) {
+                    $("#newBal").text("$" + remainingMoney)
+                } else {
+                    $("#newBal").text("$" + userBal)
+                }
+            })
+        }
+
+        function startTransaction() {
+            let quantity = parseInt($("#currency_quantity").val())
+            $.ajax({
+                url: '/initiateTransaction',
+                type: 'POST',
+                data: {
+                    'sender_id':{{ session['uid'] }},
+                    'currency': curName,
+                    'quantity': quantity,
+                    'receiver_id':{{ session['uid'] }}
+                },
+                success: function (response) {
+                    console.log(response)
+                    $("#buyCryptoModal").modal('hide')
+                },
+                error: function (response) {
+
+                }
+            })
+        }
+    </script>
+{% endblock %}
+
